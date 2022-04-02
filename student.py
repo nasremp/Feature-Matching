@@ -154,9 +154,23 @@ def match_features(im1_features, im2_features):
 
     # TODO: Your implementation here! See block comments and the project webpage for instructions
 
+    matches = []
+    confidences = []
+    threshold = 0.7
+
+    for r in range(im1_features.shape[0]):
+        distance = np.sqrt(np.square(np.subtract(im1_features[r, :], im2_features)).sum(axis=1)) # get the distances between the fearures
+        sort_index = np.argsort(distance)    #sort the distances from lower to higher
+        if distance[sort_index[0]] / distance[sort_index[1]] < threshold:   # check for NNDR, if less than the threshold add it 
+            matches.append([r, sort_index[0]])
+            confidences.append(1.0 - distance[sort_index[0]]/distance[sort_index[1]])
+    matches = np.asarray(matches)     
+    confidences = np.asarray(confidences)
+
     # These are placeholders - replace with your matches and confidences!
 
-    matches = np.zeros((1, 2))
-    confidences = np.zeros(1)
+    #matches = np.zeros((1, 2))
+    #confidences = np.zeros(1)
+
 
     return matches, confidences
