@@ -16,8 +16,8 @@ import student as student
 from helpers import evaluate_correspondence, cheat_interest_points
 
 matplotlib.use("TkAgg")
-
-
+import matplotlib.pyplot as plt
+import helpers
 # This script
 # (1) Loads and resizes images
 # (2) Finds interest points in those images                 (you code this)
@@ -91,15 +91,15 @@ def main():
     """
 
     # create the command line parser
-    parser = argparse.ArgumentParser()
+    #parser = argparse.ArgumentParser()
 
-    parser.add_argument("-p", "--pair", required=True,
-                        help="Either notre_dame, mt_rushmore, or e_gaudi. Specifies which image pair to match")
+    #parser.add_argument("-p", "--pair", required=True,
+                        #help="Either notre_dame, mt_rushmore, or e_gaudi. Specifies which image pair to match")
 
-    args = parser.parse_args()
+    #args = parser.parse_args()
 
     # (1) Load in the data
-    image1_color, image2_color, eval_file = load_data(args.pair)
+    image1_color, image2_color, eval_file = load_data("notre_dame")
 
     # You don't have to work with grayscale images. Matching with color
     # information might be helpful. If you choose to work with RGB images, just
@@ -107,10 +107,10 @@ def main():
 
     image1 = rgb2gray(image1_color)
     # Our own rgb2gray coefficients which match Rec.ITU-R BT.601-7 (NTSC) luminance conversion - only mino
-    # performance improvements and could be confusing to students image1 = image1[:,:,0] * 0.2989 + image1[:,:,
-    # 1] * 0.5870 + image1[:,:,2] * 0.1140
+    # performance improvements and could be confusing to students
+    #image1 = image1[:,:,0] * 0.2989 + image1[:,:,1] * 0.5870 + image1[:,:,2] * 0.1140
     image2 = rgb2gray(image2_color)
-    # image2 = image2[:,:,0] * 0.2989 + image2[:,:,1] * 0.5870 + image2[:,:,2] * 0.1140
+    #image2 = image2[:,:,0] * 0.2989 + image2[:,:,1] * 0.5870 + image2[:,:,2] * 0.1140
 
     # make images smaller to speed up the algorithm. This parameter
     # gets passed into the evaluation code, so don't resize the images
@@ -130,8 +130,8 @@ def main():
 
     print("Getting interest points...")
 
-    (x1, y1) = student.get_interest_points(image1, feature_width)
-    (x2, y2) = student.get_interest_points(image2, feature_width)
+    #(x1, y1) = student.get_interest_points(image1, feature_width)
+    #(x2, y2) = student.get_interest_points(image2, feature_width)
 
     # For development and debugging get_features and match_features, you will likely
     # want to use the ta ground truth points, you can comment out the preceding two
@@ -139,13 +139,13 @@ def main():
     # points for mt. rushmore will not produce good results, so you'll have to use
     # your own function for that image pair.
 
-    # (x1, y1, x2, y2) = cheat_interest_points(eval_file, scale_factor)
+    (x1, y1, x2, y2) = cheat_interest_points(eval_file, scale_factor)
 
     # if you want to view your corners uncomment these next lines!
 
-    # plt.imshow(image1, cmap="gray")
-    # plt.scatter(x1, y1, alpha=0.9, s=3)
-    # plt.show()
+    #plt.imshow(image1, cmap="gray")
+    #plt.scatter(x1, y1, alpha=0.9, s=3)
+    #plt.show()
 
     # plt.imshow(image2, cmap="gray")
     # plt.scatter(x2, y2, alpha=0.9, s=3)
@@ -188,7 +188,7 @@ def main():
     num_pts_to_visualize = 50
 
     evaluate_correspondence(image1_color, image2_color, eval_file, scale_factor,
-                            x1, y1, x2, y2, matches, confidences, num_pts_to_visualize, args.pair + '_matches.jpg')
+                            x1, y1, x2, y2, matches, confidences, num_pts_to_visualize, "notre_dame" + '_matches.jpg')
 
 
 if __name__ == '__main__':
