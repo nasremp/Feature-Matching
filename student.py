@@ -115,8 +115,71 @@ def get_features(image, x, y, feature_width):
 
     # TODO: Your implementation here! See block comments and the project webpage for instructions
 
+    #convert x,y to integers
+    x = np.round(x).astype(int)
+    y = np.round(y).astype(int)
+    
+    features = np.zeros((len(x), 4, 4, 8))  #initializing with the sutable diminsions
+
+    filtered_image = filters.gaussian(image, sigma=0.1) # apply gaussian filter for blurred image
+    
+    # get the gradient of the image
+    dx = filters.sobel_v(filtered_image)
+    dy = filters.sobel_h(filtered_image)
+
+    gradient = np.sqrt(np.add(np.square(dx), np.square(dy))) #gradient magnitude
+    direction = np.arctan2(dy, dx) #gradient direction
+    direction[direction < 0] += 2 * np.pi
+
+    for n, (i, j) in enumerate(zip(x, y)):
+        
+        # get windows 
+        rows = (j - feature_width // 2, j + feature_width // 2 + 1)
+        
+        if rows[0] < 0:
+            rows = (0, feature_width + 1)
+        if rows[1] > image.shape[0]:
+            rows = (image.shape[0] - feature_width - 1, image.shape[0] - 1)
+            
+        cols = (i - feature_width // 2, i + feature_width // 2 + 1)
+
+        if cols[0] < 0:
+            cols = (0, feature_width + 1)
+        if cols[1] > image.shape[1]:
+            cols = (image.shape[1] - feature_width - 1, image.shape[1] - 1)
+
+        # get the features of the window (magnitude and angels)
+        gradient_window = gradient[rows[0]:rows[1], cols[0]:cols[1]]
+        direction_window = direction[rows[0]:rows[1], cols[0]:cols[1]]
+
+        # apply gaussian filter on the window
+        magnitude_window = filters.gaussian(gradient_window, sigma=0.4)
+        direction_window = filters.gaussian(direction_window, sigma=0.4)
+
+        for i in range(feature_width // 4):
+            for j in range(feature_width // 4):
+                curr_mage = magnitude_window[i*feature_width//4: (i+1)*feature_width//4, j*feature_width//4:(j+1)*feature_width//4]
+                curr_dir = direction_window[i*feature_width//4: (i+1)*feature_width//4, j*feature_width//4:(j+1)*feature_width//4]
+                features[n, i, j] = np.histogram(curr_dir.reshape(-1), bins=8, range=(0, 2*np.pi), weights=curr_mag.reshape(-1))[0]
+                    
+
+    # reshape into 128 dim vector
+    features = features.reshape((len(x), -1,))
+
+    # Normalize 
+    norm = np.sqrt(np.square(features).sum(axis=1)).reshape(-1, 1)
+    features = features / norm
+    
+    threshold = 0.2
+    features[features >= threshold] = threshold
+
+    # Renormalizing
+    norm = np.sqrt(np.square(features).sum(axis=1)).reshape(-1, 1)
+    features = features / norm
+
+
     # This is a placeholder - replace this with your features!
-    features = np.zeros((1, 128))
+    #features = np.zeros((1, 128))
 
     return features
 
