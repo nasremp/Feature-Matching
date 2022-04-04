@@ -1,7 +1,14 @@
 import numpy as np
+from skimage.filters import scharr_h, scharr_v, sobel_h, sobel_v, gaussian
+import cv2
+# debug:
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use("TkAgg")
 
-
+from scipy import ndimage
 from skimage import filters, feature, img_as_int
+from math import floor
 
 def get_interest_points(image, feature_width):
     """
@@ -34,38 +41,45 @@ def get_interest_points(image, feature_width):
     :orientation: an np array indicating the orientation of each interest point
     """
 
-    alpha = 0.06
-    threshold = 0.01
-    min_distance = 3
+    
+    alpha = 0.05
+    threshold = 0.004
+    stride = 2
+    sigma = 0.2
+    #coordinates of the interest points
+    xs = []
+    ys = []
+    
+    #Sobel gets edges "ggradient" in each of both vertical and horizontal
+    I_x = cv2.Sobel(image, cv2.CV_8U, 1, 0, ksize=5)
+    I_y = cv2.Sobel(image, cv2.CV_8U, 0, 1, ksize=5)
+    
+    #Smooth with gaussian filter in each of both directions
+    I_x = gaussian(I_x, sigma)
+    I_y = gaussian(I_y, sigma)
 
-    #Sobel
-    I_x = filters.sobel_v(image)
-    I_y = filters.sobel_h(image)
+    Ixx = I_x**2
+    Ixy = I_y*I_x
+    Iyy = I_y**2
 
-    #calculate Gxx, Gxy, Gyy
-    I_xx = np.square(I_x)
-    I_xy = np.multiply(I_x, I_y)
-    I_yy = np.square(I_y)
-
-
-    listC = np.zeros_like(image)
-
-    xs=[]
-    ys=[]
-    # caculate C matrix
-    for y in range(0,rows-feature_width,2):
-        for x in range(0,cols-feature_width,2):
-            Sxx = np.sum(Ixx[y:y+feature_width+1, x:x+feature_width+1])
-            Syy = np.sum(Iyy[y:y+feature_width+1, x:x+feature_width+1])
-            Sxy = np.sum(Ixy[y:y+feature_width+1, x:x+feature_width+1])
-            #Find determinant and trace, use to get corner response
+    # end of neighborhood covered and the addition segment
+    end=feature_width+1
+    add=feature_width/2-1
+    # SSD calculation
+    for y in range(0,image.shape[0]-feature_width,stride):
+        for x in range(0,image.shape[1]-feature_width,stride):
+            #Matrix dimensinon is end * end
+            Sxx = np.sum(Ixx[y:y+end, x:x+end])
+            Syy = np.sum(Iyy[y:y+end, x:x+end])
+            Sxy = np.sum(Ixy[y:y+end, x:x+end])
+            #determinant & trace of H
             detH = (Sxx * Syy) - (Sxy**2)
             traceH = Sxx + Syy
-            R = detH - a*(traceH**2)
-            #If corner response is over threshold, it is a corner
-            if R > threshold:
-                xs.append(x + int(feature_width/2 -1))
-                ys.append(y + int(feature_width/2 -1))
+            cornerity = detH - alpha*(traceH**2)
+            #If the cornerity is greater than the threshold, it will be counted as a corner
+            if cornerity > threshold:
+                xs.append(x + add)
+                ys.append(y + add)
     return np.asarray(xs), np.asarray(ys)
 
 
